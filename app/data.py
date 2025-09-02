@@ -35,6 +35,34 @@ def load_data():
 		return Response(html, mimetype='text/html')
 	except Exception as e:
 		return Response(f"<h2>Error: {str(e)}</h2>", status=500, mimetype='text/html')
+	
+@app.route('/average-close', methods=['GET'])
+def average_close():
+	if not os.path.exists(DATA_PATH):
+		return Response("<h2>File not found.</h2>", status=404, mimetype='text/html')
+	try:
+		df = pd.read_csv(DATA_PATH, sep=None, engine='python')
+		df['Date'] = pd.to_datetime(df['Date'])
+		df = df[(df['Date'] >= '1987-08-19') & (df['Date'] <= '2017-11-10')]
+		if 'OpenInt' in df.columns:
+			df = df.drop(columns=['OpenInt'])
+		periods = [
+			('1987-08-19', '1997-12-31'),
+			('1998-01-01', '2007-12-31'),
+			('2008-01-01', '2017-11-10')
+		]
+		avg_closes = []
+		for start, end in periods:
+			period_df = df[(df['Date'] >= start) & (df['Date'] <= end)]
+			avg_close = period_df['Close'].mean()
+			avg_closes.append((start, end, avg_close))
+		html = "<h2>Average Close Price by Period</h2><ul>"
+		for i, (start, end, avg) in enumerate(avg_closes, 1):
+			html += f"<li>Period {i} ({start} to {end}): <b>{avg:.2f}</b></li>"
+		html += "</ul>"
+		return Response(html, mimetype='text/html')
+	except Exception as e:
+		return Response(f"<h2>Error: {str(e)}</h2>", status=500, mimetype='text/html')
 
 if __name__ == "__main__":
 	app.run(debug=True)

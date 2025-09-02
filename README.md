@@ -16,6 +16,8 @@
 
 ### 3rd Commit
 
+- Added a new Flask route to visualize the average close price for each of the three time periods.
+
 ### 4th Commit
 
 ### 5th Commit
