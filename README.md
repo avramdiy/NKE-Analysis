@@ -12,6 +12,8 @@
 
 ### 2nd Commit
 
+- Dropped the OpenInt column and split the original DataFrame into three separate time periods for targeted analysis and visualization.
+
 ### 3rd Commit
 
 ### 4th Commit
