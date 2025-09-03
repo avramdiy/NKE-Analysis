@@ -21,4 +21,7 @@
 ### 4th Commit
 
 - Added a Flask route to visualize the monthly average volume for each period timeframe.
+
 ### 5th Commit
+
+- Added a Flask route to visualize a line chart of the average close price across the three periods.

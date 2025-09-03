@@ -1,5 +1,8 @@
 from flask import Flask, Response
 import pandas as pd
+import matplotlib.pyplot as plt
+import io
+import base64
 import os
 
 app = Flask(__name__)
@@ -86,6 +89,43 @@ def monthly_average_volume():
 			monthly_avg = period_df.groupby('YearMonth')['Volume'].mean().reset_index()
 			html += f"<h3>Period {i}: {start} to {end}</h3>"
 			html += monthly_avg.to_html(index=False)
+		return Response(html, mimetype='text/html')
+	except Exception as e:
+		return Response(f"<h2>Error: {str(e)}</h2>", status=500, mimetype='text/html')
+	
+@app.route('/average-close-linechart', methods=['GET'])
+def average_close_linechart():
+	if not os.path.exists(DATA_PATH):
+		return Response("<h2>File not found.</h2>", status=404, mimetype='text/html')
+	try:
+		df = pd.read_csv(DATA_PATH, sep=None, engine='python')
+		df['Date'] = pd.to_datetime(df['Date'])
+		df = df[(df['Date'] >= '1987-08-19') & (df['Date'] <= '2017-11-10')]
+		if 'OpenInt' in df.columns:
+			df = df.drop(columns=['OpenInt'])
+		periods = [
+			('1987-08-19', '1997-12-31'),
+			('1998-01-01', '2007-12-31'),
+			('2008-01-01', '2017-11-10')
+		]
+		avg_closes = []
+		for start, end in periods:
+			period_df = df[(df['Date'] >= start) & (df['Date'] <= end)]
+			avg_close = period_df['Close'].mean()
+			avg_closes.append(avg_close)
+		# Plot line chart
+		fig, ax = plt.subplots()
+		ax.plot([f'Period {i+1}' for i in range(3)], avg_closes, marker='o')
+		ax.set_title('Average Close Price Across Three Periods')
+		ax.set_xlabel('Period')
+		ax.set_ylabel('Average Close Price')
+		plt.tight_layout()
+		buf = io.BytesIO()
+		plt.savefig(buf, format='png')
+		buf.seek(0)
+		image_base64 = base64.b64encode(buf.read()).decode('utf-8')
+		plt.close(fig)
+		html = f"<h2>Average Close Price Line Chart</h2><img src='data:image/png;base64,{image_base64}'/>"
 		return Response(html, mimetype='text/html')
 	except Exception as e:
 		return Response(f"<h2>Error: {str(e)}</h2>", status=500, mimetype='text/html')
