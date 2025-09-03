@@ -63,6 +63,32 @@ def average_close():
 		return Response(html, mimetype='text/html')
 	except Exception as e:
 		return Response(f"<h2>Error: {str(e)}</h2>", status=500, mimetype='text/html')
+	
+@app.route('/monthly-average-volume', methods=['GET'])
+def monthly_average_volume():
+	if not os.path.exists(DATA_PATH):
+		return Response("<h2>File not found.</h2>", status=404, mimetype='text/html')
+	try:
+		df = pd.read_csv(DATA_PATH, sep=None, engine='python')
+		df['Date'] = pd.to_datetime(df['Date'])
+		df = df[(df['Date'] >= '1987-08-19') & (df['Date'] <= '2017-11-10')]
+		if 'OpenInt' in df.columns:
+			df = df.drop(columns=['OpenInt'])
+		periods = [
+			('1987-08-19', '1997-12-31'),
+			('1998-01-01', '2007-12-31'),
+			('2008-01-01', '2017-11-10')
+		]
+		html = "<h2>Monthly Average Volume by Period</h2>"
+		for i, (start, end) in enumerate(periods, 1):
+			period_df = df[(df['Date'] >= start) & (df['Date'] <= end)].copy()
+			period_df['YearMonth'] = period_df['Date'].dt.to_period('M')
+			monthly_avg = period_df.groupby('YearMonth')['Volume'].mean().reset_index()
+			html += f"<h3>Period {i}: {start} to {end}</h3>"
+			html += monthly_avg.to_html(index=False)
+		return Response(html, mimetype='text/html')
+	except Exception as e:
+		return Response(f"<h2>Error: {str(e)}</h2>", status=500, mimetype='text/html')
 
 if __name__ == "__main__":
 	app.run(debug=True)

@@ -20,4 +20,5 @@
 
 ### 4th Commit
 
+- Added a Flask route to visualize the monthly average volume for each period timeframe.
 ### 5th Commit
